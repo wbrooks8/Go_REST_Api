@@ -70,10 +70,16 @@ func updateEvent(context *gin.Context) {
 		return
 	}
 
-	_, err = models.GetEventById(eventId)
+	userId := context.GetInt64("userId")
+	event, err := models.GetEventById(eventId)
 
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not fetch event."})
+		return
+	}
+
+	if int64(event.UserID) != userId {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized to udpate event!"})
 		return
 	}
 
