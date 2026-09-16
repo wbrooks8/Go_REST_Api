@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"example.com/REST-api/models"
+	"example.com/REST-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,8 +40,22 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
+	token := context.Request.Header.Get("Authorization")
+
+	if token == "" {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized."})
+		return
+	}
+
+	err := utils.VerifyToken(token)
+
+	if err != nil {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized"})
+		return
+	}
+
 	var event models.Event
-	err := context.ShouldBindJSON(&event)
+	err = context.ShouldBindJSON(&event)
 
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data."})
@@ -103,7 +118,7 @@ func deleteEvent(context *gin.Context) {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse event ID."})
 		return
 	}
-	
+
 	event, err := models.GetEventById(eventId)
 
 	if err != nil {
@@ -120,4 +135,3 @@ func deleteEvent(context *gin.Context) {
 
 	context.JSON(http.StatusOK, gin.H{"message": "Event deleted successfully!"})
 }
-
