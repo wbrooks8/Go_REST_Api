@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Public event handlers read data; protected handlers also read the user ID
+// placed in the context by authentication middleware.
 func getEvents(context *gin.Context) {
 	events, err := models.GetAllEvents()
 
@@ -39,7 +41,6 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
-
 	var event models.Event
 	err := context.ShouldBindJSON(&event)
 

@@ -15,8 +15,7 @@ type Event struct {
 	UserID      int
 }
 
-var events = []Event{}
-
+// Save inserts an event and copies the database-generated ID back to the event.
 func (e *Event) Save() error {
 	query := `
 	INSERT INTO events (name, description, location, dateTime, userID) 
@@ -74,6 +73,8 @@ func GetAllEvents() ([]Event, error) {
 	return events, nil
 }
 
+// GetEventById loads one event by its primary key. A missing row is returned
+// as an error from database/sql.
 func GetEventById(id int64) (*Event, error) {
 	query := "SELECT * FROM events WHERE id = ?"
 
@@ -90,7 +91,7 @@ func GetEventById(id int64) (*Event, error) {
 	return &event, nil
 }
 
-func (event Event) Update() error{
+func (event Event) Update() error {
 	query := `
 	UPDATE events
 	SET name = ?, description = ?, location = ?, dateTime = ?, userID = ?
@@ -100,7 +101,8 @@ func (event Event) Update() error{
 	stmt, err := db.DB.Prepare(query)
 
 	if err != nil {
-		return err}
+		return err
+	}
 
 	defer stmt.Close()
 
@@ -108,7 +110,8 @@ func (event Event) Update() error{
 	return err
 }
 
-func (event Event)Delete() error {
+// Delete removes this event using its ID.
+func (event Event) Delete() error {
 	query := `
 	DELETE FROM events WHERE id = ?
 	`
@@ -118,14 +121,15 @@ func (event Event)Delete() error {
 	if err != nil {
 		return err
 	}
-	
+
 	defer stmt.Close()
 
-	_, err =stmt.Exec(event.ID)
+	_, err = stmt.Exec(event.ID)
 	return err
 }
 
-func (e Event) Register(userId int64) error{
+// Register creates a row in the event/user join table.
+func (e Event) Register(userId int64) error {
 	query := "INSERT INTO regestrations(event_id, user_id) VALUES (?, ?)"
 	stmt, err := db.DB.Prepare(query)
 
@@ -140,3 +144,19 @@ func (e Event) Register(userId int64) error{
 	return err
 }
 
+func (e Event) CancelRegistration(userId int64) error {
+	// The table name is retained for compatibility with the existing database
+	// schema, which was originally created with this spelling.
+	query := "DELETE FROM regestrations WHERE event_id = ? AND user_id = ?"
+	stmt, err := db.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(e.ID, userId)
+
+	return err
+}

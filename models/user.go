@@ -9,11 +9,12 @@ import (
 
 type User struct {
 	ID       int64
-	Email    string `binding:"required`
+	Email    string `binding:"required"`
 	Password string `binding:"required"`
 }
 
-func (u User) Save() error {
+// Save hashes the password before inserting the user and stores the new ID.
+func (u *User) Save() error {
 	query := " INSERT INTO users(email, password) VALUES(?,?)"
 
 	stmt, err := db.DB.Prepare(query)
@@ -39,12 +40,13 @@ func (u User) Save() error {
 	userId, err := result.LastInsertId()
 
 	u.ID = userId
-	return err
-
+	return nil
 }
 
+// ValidateCredentials loads the stored hash and compares it with the supplied
+// password without exposing whether the email or password was incorrect.
 func (u *User) ValidateCredentials() error {
-	query := "SELECT id, password FROM user WHERE email = ?"
+	query := "SELECT id, password FROM users WHERE email = ?"
 
 	row := db.DB.QueryRow(query, u.Email)
 

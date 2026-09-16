@@ -7,12 +7,16 @@ import (
 )
 
 func main() {
-
+	// Initialize storage before registering handlers because model functions
+	// use the package-level database handle.
 	db.InitDB()
 
 	server := gin.Default()
 
 	routes.RegisterRoutes(server)
 
-	server.Run(":8080")
+	// Run starts the HTTP server and blocks while it accepts requests.
+	if err := server.Run(":8080"); err != nil {
+		panic(err)
+	}
 }

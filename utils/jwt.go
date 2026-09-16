@@ -9,6 +9,8 @@ import (
 
 const secretKey = "supersecret"
 
+// GenerateToken creates a signed token containing the user identity and a
+// two-hour expiration.
 func GenerateToken(email string, userId int64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email":  email,
@@ -19,6 +21,7 @@ func GenerateToken(email string, userId int64) (string, error) {
 	return token.SignedString([]byte(secretKey))
 }
 
+// VerifyToken validates the signature and extracts the user ID safely.
 func VerifyToken(token string) (int64, error) {
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
@@ -46,9 +49,11 @@ func VerifyToken(token string) (int64, error) {
 		return 0, errors.New("Invalid token claims")
 	}
 
-	// email := claims["email"].(string)
-	userId := int64(claims["userId"].(float64))
+	userID, ok := claims["userId"].(float64)
+	if !ok {
+		return 0, errors.New("Invalid user ID claim")
+	}
 
-	return userId, nil
+	return int64(userID), nil
 
 }

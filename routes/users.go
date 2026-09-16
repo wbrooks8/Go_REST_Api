@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// signup decodes JSON, delegates persistence to the model, and returns the
+// created resource with a 201 response.
 func signup(context *gin.Context) {
 	var user models.User
 	err := context.ShouldBindJSON(&user)
